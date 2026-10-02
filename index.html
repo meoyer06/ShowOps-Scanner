@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <title>ShowOps</title>
+
+  <script
+    src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js">
+  </script>
+
+  <style>
+
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --ink: #202124;
+      --muted: #6b7280;
+      --line: #d9dde3;
+      --accent: #ab202f;
+      --good: #137333;
+      --warn: #b06000;
+      --bad: #b3261e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+    }
+
+    .app {
+      max-width: 680px;
+      margin: 0 auto;
+      padding:
+        14px
+        14px
+        40px;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .brand {
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    input,
+    button {
+      width: 100%;
+      min-height: 46px;
+      border-radius: 10px;
+      font-size: 17px;
+    }
+
+    input {
+      border: 1px solid #bfc5cc;
+      padding: 9px 11px;
+    }
+
+    button {
+      border: none;
+      padding: 10px 14px;
+      font-weight: 700;
+    }
+
+    .mode {
+      display: grid;
+      grid-template-columns:
+        1fr
+        1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .mode button {
+      background: #eceff3;
+    }
+
+    .mode button.active {
+      background: #fff4f5;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .manual {
+      display: grid;
+      grid-template-columns:
+        1fr
+        105px;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .manual button {
+      background: #eceff3;
+    }
+
+    #reader {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    #reader video {
+      border-radius: 12px;
+    }
+
+    .status {
+      border-radius: 14px;
+      padding: 15px;
+      line-height: 1.35;
+      margin-top: 12px;
+    }
+
+    .idle {
+      background: #eef1f5;
+    }
+
+    .good {
+      background: #e6f4ea;
+      color: #0d652d;
+    }
+
+    .warn {
+      background: #fef7e0;
+      color: #7a4d00;
+    }
+
+    .bad {
+      background: #fce8e6;
+      color: #a50e0e;
+    }
+
+    .big {
+      font-size: 25px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .details {
+      margin-top: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .detail {
+      display: grid;
+      grid-template-columns:
+        100px
+        1fr;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .detail b {
+      color: #555;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns:
+        repeat(3, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+
+    .stat {
+      background: #f5f6f8;
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+    }
+
+    .stat span {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    #bridgeStatus {
+      font-size: 12px;
+      margin-top: 7px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    #bridge {
+      width: 1px;
+      height: 1px;
+      position: absolute;
+      left: -5000px;
+      top: -5000px;
+      border: 0;
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+  <div class="top">
+
+    <div>
+
+      <div class="brand">
+        ShowOps
+      </div>
+
+      <div class="sub">
+        Freight Scanner v0.2
+      </div>
+
+    </div>
+
+    <div
+      class="sub"
+      id="manifestCount">
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <label>
+      Operator
+    </label>
+
+    <input
+      id="operator"
+      placeholder="Your name"
+      autocomplete="name"
+    >
+
+
+    <div class="mode">
+
+      <button
+        id="unloadBtn"
+        class="active"
+        onclick="setAction('UNLOAD')">
+
+        Unload
+
+      </button>
+
+
+      <button
+        id="deliverBtn"
+        onclick="setAction('DELIVER')">
+
+        Delivered
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div id="reader">
+    </div>
+
+
+    <div class="manual">
+
+      <input
+        id="manualId"
+        inputmode="numeric"
+        placeholder="Or type Scan #"
+      >
+
+      <button
+        onclick="manualScan()">
+
+        Submit
+
+      </button>
+
+    </div>
+
+
+    <div id="bridgeStatus">
+
+      Connecting to ShowOps…
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="status"
+    class="status idle">
+
+    <div class="big">
+      Ready
+    </div>
+
+    <div>
+      Enter your name and scan a pallet.
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="stats">
+
+      <div class="stat">
+
+        <strong id="sUnload">
+          0
+        </strong>
+
+        <span>
+          Unloaded
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <strong id="sDeliver">
+          0
+        </strong>
+
+        <span>
+          Delivered
+        </span>
+
+      </div>
+
+
+      <div class="stat">
+
+        <strong id="sErrors">
+          0
+        </strong>
+
+        <span>
+          Exceptions
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!--
+=========================================================
+IMPORTANT
+REPLACE THE URL BELOW WITH YOUR APPS SCRIPT /exec URL
+=========================================================
+-->
+
+<iframe
+  id="bridge"
+  src="https://script.google.com/macros/s/AKfycbw2goxRWWUpAPy8ZJXAZ5kWs3vYznX715iuWqvOSCCMqEVSoWngQ__xEVZM0L2FaYELHw/exec">
+</iframe>
+
+
+<script>
+
+  let action =
+    'UNLOAD';
+
+  let bridgeReady =
+    false;
+
+  let busy =
+    false;
+
+  let lastDecoded =
+    '';
+
+  let lastDecodedAt =
+    0;
+
+
+  const operator =
+    document.getElementById(
+      'operator'
+    );
+
+
+  operator.value =
+    localStorage.getItem(
+      'showops_operator'
+    ) || '';
+
+
+  operator.addEventListener(
+    'change',
+    function() {
+
+      localStorage.setItem(
+        'showops_operator',
+        operator.value.trim()
+      );
+
+    }
+  );
+
+
+  document
+    .getElementById(
+      'manualId'
+    )
+    .addEventListener(
+      'keydown',
+      function(e) {
+
+        if (
+          e.key === 'Enter'
+        ) {
+          manualScan();
+        }
+
+      }
+    );
+
+
+  function setAction(next) {
+
+    action = next;
+
+    document
+      .getElementById(
+        'unloadBtn'
+      )
+      .classList
+      .toggle(
+        'active',
+        next === 'UNLOAD'
+      );
+
+
+    document
+      .getElementById(
+        'deliverBtn'
+      )
+      .classList
+      .toggle(
+        'active',
+        next === 'DELIVER'
+      );
+
+
+    setStatus(
+      'idle',
+      'Ready',
+      next === 'UNLOAD'
+        ? 'Scanning will record the pallet as unloaded.'
+        : 'Scanning will record the pallet as delivered.'
+    );
+
+  }
+
+
+  /*
+   * Communicate with the hidden Apps Script page.
+   */
+  function sendBridge(
+    type,
+    data
+  ) {
+
+    const frame =
+      document.getElementById(
+        'bridge'
+      );
+
+
+    frame.contentWindow.postMessage(
+      Object.assign(
+        {
+          source:
+            'SHOWOPS_SCANNER',
+
+          type:
+            type
+        },
+        data || {}
+      ),
+      '*'
+    );
+
+  }
+
+
+  window.addEventListener(
+    'message',
+    function(event) {
+
+      const msg =
+        event.data || {};
+
+
+      if (
+        msg.source !==
+        'SHOWOPS_BRIDGE'
+      ) {
+        return;
+      }
+
+
+      if (
+        msg.type ===
+        'BRIDGE_READY'
+      ) {
+
+        bridgeReady = true;
+
+        document
+          .getElementById(
+            'bridgeStatus'
+          )
+          .textContent =
+            'Connected to ShowOps';
+
+
+        sendBridge(
+          'GET_CONFIG'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        msg.type ===
+        'CONFIG_RESULT'
+      ) {
+
+        const cfg =
+          msg.data || {};
+
+        document
+          .getElementById(
+            'manifestCount'
+          )
+          .textContent =
+            (
+              cfg.validPalletCount ||
+              0
+            ) +
+            ' pallets';
+
+        return;
+
+      }
+
+
+      if (
+        msg.type ===
+        'SCAN_RESULT'
+      ) {
+
+        busy = false;
+
+        handleScanResult(
+          msg.data.result
+        );
+
+        return;
+
+      }
+
+
+      if (
+        msg.type ===
+        'SCAN_ERROR'
+      ) {
+
+        busy = false;
+
+        setStatus(
+          'bad',
+          'Server error',
+          msg.data.message ||
+          'Unable to record scan.'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        msg.type ===
+        'SERVER_ERROR'
+      ) {
+
+        busy = false;
+
+        setStatus(
+          'bad',
+          'Server error',
+          msg.data.message ||
+          'Unable to reach ShowOps.'
+        );
+
+      }
+
+    }
+  );
+
+
+  function normalizeId(value) {
+
+    return String(
+      value || ''
+    )
+      .trim()
+      .replace(
+        /^\*+|\*+$/g,
+        ''
+      )
+      .replace(
+        /\.0+$/,
+        ''
+      );
+
+  }
+
+
+  function onScanSuccess(
+    decodedText
+  ) {
+
+    const id =
+      normalizeId(
+        decodedText
+      );
+
+
+    const now =
+      Date.now();
+
+
+    if (
+      busy ||
+      !id
+    ) {
+      return;
+    }
+
+
+    if (
+      id === lastDecoded &&
+      now -
+      lastDecodedAt <
+      2500
+    ) {
+      return;
+    }
+
+
+    lastDecoded =
+      id;
+
+    lastDecodedAt =
+      now;
+
+
+    submitScan(
+      id
+    );
+
+  }
+
+
+  function manualScan() {
+
+    const field =
+      document.getElementById(
+        'manualId'
+      );
+
+
+    const id =
+      normalizeId(
+        field.value
+      );
+
+
+    if (!id) {
+      return;
+    }
+
+
+    field.value = '';
+
+
+    submitScan(
+      id
+    );
+
+  }
+
+
+  function submitScan(id) {
+
+    const name =
+      operator.value.trim();
+
+
+    if (!name) {
+
+      setStatus(
+        'bad',
+        'Operator required',
+        'Enter your name before scanning.'
+      );
+
+      return;
+
+    }
+
+
+    if (!bridgeReady) {
+
+      setStatus(
+        'warn',
+        'Not connected',
+        'The ShowOps backend has not connected yet.'
+      );
+
+      return;
+
+    }
+
+
+    busy = true;
+
+
+    localStorage.setItem(
+      'showops_operator',
+      name
+    );
+
+
+    const payload = {
+
+      eventId:
+        makeEventId(),
+
+      scanId:
+        id,
+
+      action:
+        action,
+
+      operator:
+        name,
+
+      deviceTimestamp:
+        new Date()
+          .toISOString(),
+
+      notes:
+        ''
+
+    };
+
+
+    setStatus(
+      'idle',
+      'Recording ' + id + '…',
+      action
+    );
+
+
+    sendBridge(
+      'RECORD_SCAN',
+      {
+        requestId:
+          payload.eventId,
+
+        payload:
+          payload
+      }
+    );
+
+  }
+
+
+  function handleScanResult(res) {
+
+    if (
+      !res ||
+      !res.ok
+    ) {
+
+      setStatus(
+        res &&
+        res.code ===
+        'DUPLICATE_ID'
+          ? 'warn'
+          : 'bad',
+
+        'Not recorded',
+
+        res &&
+        res.message
+          ? res.message
+          : 'Unknown error.'
+      );
+
+      return;
+
+    }
+
+
+    const p =
+      res.pallet ||
+      {};
+
+
+    const label =
+      (
+        res.action ===
+        'DELIVER'
+      )
+        ? 'Delivered'
+        : 'Unloaded';
+
+
+    const html =
+      '<div class="details">' +
+
+      detail(
+        'Description',
+        p.description
+      ) +
+
+      detail(
+        'Area/Store',
+        p.areaStore
+      ) +
+
+      detail(
+        'Drop Zone',
+        p.dropZone
+      ) +
+
+      detail(
+        'Trailer',
+        p.trailerNumber
+      ) +
+
+      detail(
+        'Fixture ID',
+        p.fixtureId
+      ) +
+
+      detail(
+        'Time',
+        res.serverTime
+      ) +
+
+      '</div>';
+
+
+    setStatusHtml(
+      'good',
+      label +
+      ' • ' +
+      (
+        p.scanNumber ||
+        ''
+      ),
+      html
+    );
+
+
+    if (
+      res.stats
+    ) {
+      updateStats(
+        res.stats
+      );
+    }
+
+  }
+
+
+  function updateStats(s) {
+
+    document
+      .getElementById(
+        'sUnload'
+      )
+      .textContent =
+        s.unloaded || 0;
+
+
+    document
+      .getElementById(
+        'sDeliver'
+      )
+      .textContent =
+        s.delivered || 0;
+
+
+    document
+      .getElementById(
+        'sErrors'
+      )
+      .textContent =
+        s.errors || 0;
+
+  }
+
+
+  function detail(
+    label,
+    value
+  ) {
+
+    return (
+      '<div class="detail">' +
+        '<b>' +
+          escapeHtml(label) +
+        '</b>' +
+        '<span>' +
+          escapeHtml(
+            value ||
+            '—'
+          ) +
+        '</span>' +
+      '</div>'
+    );
+
+  }
+
+
+  function setStatus(
+    type,
+    title,
+    message
+  ) {
+
+    const el =
+      document.getElementById(
+        'status'
+      );
+
+
+    el.className =
+      'status ' +
+      type;
+
+
+    el.innerHTML =
+      '<div class="big">' +
+      escapeHtml(title) +
+      '</div>' +
+
+      '<div>' +
+      escapeHtml(message) +
+      '</div>';
+
+  }
+
+
+  function setStatusHtml(
+    type,
+    title,
+    html
+  ) {
+
+    const el =
+      document.getElementById(
+        'status'
+      );
+
+
+    el.className =
+      'status ' +
+      type;
+
+
+    el.innerHTML =
+      '<div class="big">' +
+      escapeHtml(title) +
+      '</div>' +
+      html;
+
+  }
+
+
+  function escapeHtml(value) {
+
+    return String(
+      value == null
+        ? ''
+        : value
+    )
+      .replace(
+        /&/g,
+        '&amp;'
+      )
+      .replace(
+        /</g,
+        '&lt;'
+      )
+      .replace(
+        />/g,
+        '&gt;'
+      )
+      .replace(
+        /"/g,
+        '&quot;'
+      )
+      .replace(
+        /'/g,
+        '&#39;'
+      );
+
+  }
+
+
+  function makeEventId() {
+
+    return (
+      'EVT-' +
+      Date.now()
+        .toString(36) +
+      '-' +
+      Math.random()
+        .toString(36)
+        .slice(
+          2,
+          10
+        )
+    );
+
+  }
+
+
+  /*
+   * CAMERA SCANNER
+   */
+  const scanner =
+    new Html5QrcodeScanner(
+      'reader',
+      {
+
+        fps: 12,
+
+        qrbox:
+          function(
+            width,
+            height
+          ) {
+
+            return {
+
+              width:
+                Math.min(
+                  width - 30,
+                  420
+                ),
+
+              height:
+                Math.min(
+                  150,
+                  height - 30
+                )
+
+            };
+
+          },
+
+        rememberLastUsedCamera:
+          true,
+
+        showTorchButtonIfSupported:
+          true,
+
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats
+            .CODE_39
+        ],
+
+        supportedScanTypes: [
+          Html5QrcodeScanType
+            .SCAN_TYPE_CAMERA
+        ]
+
+      },
+      false
+    );
+
+
+  scanner.render(
+    onScanSuccess,
+    function() {}
+  );
+
+</script>
+
+</body>
+
+</html>
